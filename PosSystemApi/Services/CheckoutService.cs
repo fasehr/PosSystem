@@ -1,16 +1,16 @@
-﻿using PosSystemApi.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using PosSystemApi.Data;
+using PosSystemApi.Models;
 
 namespace PosSystemApi.Services
 {
     public class CheckoutService : ICheckoutService
     {
-        private readonly Queue<Order> _orders;
-        private int _nextOrderId;
+        private readonly AppDbContext _context;
 
-        public CheckoutService()
+        public CheckoutService(AppDbContext context)
         {
-            _orders = new Queue<Order>();
-            _nextOrderId = 1;
+            _context = context;
         }
 
         public Order Checkout(Cart cart)
@@ -25,26 +25,48 @@ namespace PosSystemApi.Services
                 throw new InvalidOperationException("Cart is empty.");
             }
 
-            Order order = new Order(
-                _nextOrderId++,
-                cart.Items,
-                cart.Total);
+            foreach (CartItem item in cart.Items)
+            {
+                if (item.Quantity > item.Product.StockQuantity)
+                {
+                    throw new InvalidOperationException(
+                        $"Not enough stock for product {item.Product.Name}.");
+                }
+            }
+
+            Order order = new Order
+            {
+                Total = cart.Total,
+                CreatedAt = DateTime.Now
+            };
 
             foreach (CartItem item in cart.Items)
             {
                 item.Product.StockQuantity -= item.Quantity;
+
+                item.CartId = null;
+                item.Cart = null;
+
+                order.Items.Add(item);
             }
 
-            _orders.Enqueue(order);
+            _context.Orders.Add(order);
+
+            _context.SaveChanges();
 
             cart.Items.Clear();
+
+            _context.SaveChanges();
 
             return order;
         }
 
         public IReadOnlyCollection<Order> GetOrders()
         {
-            return _orders;
+            return _context.Orders
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .ToList();
         }
     }
 }
