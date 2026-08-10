@@ -1,42 +1,33 @@
-using PosSystemApi.Helpers;
+using Microsoft.EntityFrameworkCore;
+using PosSystemApi.Data;
 using PosSystemApi.Services;
-// Application entry point/ Application builder.
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add controllers
 builder.Services.AddControllers();
 
-// Dependency Injection
-builder.Services.AddSingleton<IProductService, ProductService>();
-builder.Services.AddSingleton<ICartService, CartService>();
-builder.Services.AddSingleton<ICheckoutService, CheckoutService>();
+// Swagger / OpenAPI
+builder.Services.AddOpenApi();
 
-// Swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Entity Framework Core + SQL Server
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Services
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 
 var app = builder.Build();
 
-// Load Products.csv when the application starts
-using (var scope = app.Services.CreateScope())
-{
-    var productService = scope.ServiceProvider
-        .GetRequiredService<IProductService>();
-
-    ProductLoader.LoadProducts(productService);
-}
-
-// Middlewares
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
 
 app.MapControllers();
 
