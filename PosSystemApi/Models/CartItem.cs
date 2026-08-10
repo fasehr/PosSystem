@@ -1,30 +1,28 @@
-﻿namespace PosSystemApi.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace PosSystemApi.Models
 {
     public class CartItem
     {
-        public Product Product { get; set; }
+        [Key]
+        public int CartItemId { get; set; }
 
-        private int _quantity;
+        public string ProductSku { get; set; } = string.Empty;
 
-        public int Quantity
-        {
-            get
-            {
-                return _quantity;
-            }
+        public Product Product { get; set; } = null!;
 
-            set
-            {
-                if (value <= 0)
-                {
-                    throw new ArgumentException(
-                        "Quantity must be greater than zero.");
-                }
+        public int Quantity { get; set; }
 
-                _quantity = value;
-            }
-        }
+        public int? CartId { get; set; }
 
+        public Cart? Cart { get; set; }
+
+        public int? OrderId { get; set; }
+
+        public Order? Order { get; set; }
+
+        [NotMapped]
         public decimal LineTotal
         {
             get
@@ -33,9 +31,14 @@
             }
         }
 
+        public CartItem()
+        {
+        }
+
         public CartItem(Product product, int quantity)
         {
             Product = product;
+            ProductSku = product.Sku;
             Quantity = quantity;
         }
     }

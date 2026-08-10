@@ -1,16 +1,26 @@
-﻿using PosSystemApi.Models;
+﻿using PosSystemApi.Data;
+using PosSystemApi.Models;
 
 namespace PosSystemApi.Services
 {
     public class ProductService : IProductService
     {
-        private readonly List<Product> _products;
-        private readonly Dictionary<string, Product> _productsBySku;
+        private readonly AppDbContext _context;
 
-        public ProductService()
+        public ProductService(AppDbContext context)
         {
-            _products = new List<Product>();
-            _productsBySku = new Dictionary<string, Product>();
+            _context = context;
+        }
+
+        public IReadOnlyList<Product> GetAllProducts()
+        {
+            return _context.Products.ToList();
+        }
+
+        public Product? FindProductBySku(string sku)
+        {
+            return _context.Products
+                .FirstOrDefault(p => p.Sku == sku);
         }
 
         public void AddProduct(Product product)
@@ -20,51 +30,28 @@ namespace PosSystemApi.Services
                 throw new ArgumentNullException(nameof(product));
             }
 
-            if (_productsBySku.ContainsKey(product.Sku))
+            if (_context.Products.Any(p => p.Sku == product.Sku))
             {
                 throw new ArgumentException(
                     "A product with this SKU already exists.");
             }
 
-            _products.Add(product);
-            _productsBySku.Add(product.Sku, product);
-        }
-
-        public Product? FindProductBySku(string sku)
-        {
-            if (string.IsNullOrWhiteSpace(sku))
-            {
-                throw new ArgumentException("SKU cannot be empty.");
-            }
-
-            if (_productsBySku.TryGetValue(sku, out Product? product))
-            {
-                return product;
-            }
-
-            return null;
-        }
-
-        public IReadOnlyList<Product> GetAllProducts()
-        {
-            return _products;
+            _context.Products.Add(product);
+            _context.SaveChanges();
         }
 
         public void RemoveProduct(string sku)
         {
-            if (string.IsNullOrWhiteSpace(sku))
+            var product = _context.Products
+                .FirstOrDefault(p => p.Sku == sku);
+
+            if (product == null)
             {
-                throw new ArgumentException("SKU cannot be empty.");
+                throw new KeyNotFoundException("Product not found.");
             }
 
-            if (!_productsBySku.TryGetValue(sku, out Product? product))
-            {
-                throw new KeyNotFoundException(
-                    "No product was found with this SKU.");
-            }
-
-            _products.Remove(product);
-            _productsBySku.Remove(sku);
+            _context.Products.Remove(product);
+            _context.SaveChanges();
         }
     }
 }

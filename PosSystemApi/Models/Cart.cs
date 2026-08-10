@@ -1,9 +1,16 @@
-﻿namespace PosSystemApi.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace PosSystemApi.Models
 {
     public class Cart
     {
-        public List<CartItem> Items { get; set; }
+        [Key]
+        public int CartId { get; set; }
 
+        public List<CartItem> Items { get; set; } = new();
+
+        [NotMapped]
         public decimal Total
         {
             get
@@ -17,11 +24,6 @@
 
                 return total;
             }
-        }
-
-        public Cart()
-        {
-            Items = new List<CartItem>();
         }
     }
 }
