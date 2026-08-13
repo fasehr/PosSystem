@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PosSystemApi.DTOs;
 using PosSystemApi.Models;
 using PosSystemApi.Services;
 
@@ -27,23 +26,25 @@ namespace PosSystemApi.Controllers
             return Ok(_cartService.GetCart());
         }
 
-        // POST: api/cart
-        [HttpPost]
-        public IActionResult AddToCart(AddCartItemRequest request)
+        // POST: api/cart/{sku}/{quantity}
+        [HttpPost("{sku}/{quantity}")]
+        public async Task<IActionResult> AddToCart(
+            string sku,
+            int quantity)
         {
             try
             {
                 Product? product =
-                    _productService.FindProductBySku(request.Sku);
+                    await _productService.FindProductBySkuAsync(sku);
 
                 if (product == null)
                 {
                     return NotFound("Product not found.");
                 }
 
-                _cartService.AddToCart(product, request.Quantity);
+                _cartService.AddToCart(product, quantity);
 
-                return Ok("Product added to cart.");
+                return Ok(_cartService.GetCart());
             }
             catch (Exception ex)
             {
@@ -51,19 +52,17 @@ namespace PosSystemApi.Controllers
             }
         }
 
-        // PUT: api/cart/{sku}
-        [HttpPut("{sku}")]
+        // PUT: api/cart/{sku}/{quantity}
+        [HttpPut("{sku}/{quantity}")]
         public IActionResult UpdateQuantity(
             string sku,
-            UpdateCartItemRequest request)
+            int quantity)
         {
             try
             {
-                _cartService.UpdateQuantity(
-                    sku,
-                    request.Quantity);
+                _cartService.UpdateQuantity(sku, quantity);
 
-                return Ok("Quantity updated.");
+                return Ok(_cartService.GetCart());
             }
             catch (Exception ex)
             {
@@ -73,13 +72,13 @@ namespace PosSystemApi.Controllers
 
         // DELETE: api/cart/{sku}
         [HttpDelete("{sku}")]
-        public IActionResult RemoveItem(string sku)
+        public IActionResult RemoveFromCart(string sku)
         {
             try
             {
                 _cartService.RemoveFromCart(sku);
 
-                return Ok("Item removed.");
+                return Ok(_cartService.GetCart());
             }
             catch (Exception ex)
             {
@@ -93,7 +92,7 @@ namespace PosSystemApi.Controllers
         {
             _cartService.ClearCart();
 
-            return Ok("Cart cleared.");
+            return Ok("Cart cleared successfully.");
         }
 
         // POST: api/cart/undo
@@ -104,7 +103,7 @@ namespace PosSystemApi.Controllers
             {
                 _cartService.UndoLastAdd();
 
-                return Ok("Last action undone.");
+                return Ok(_cartService.GetCart());
             }
             catch (Exception ex)
             {

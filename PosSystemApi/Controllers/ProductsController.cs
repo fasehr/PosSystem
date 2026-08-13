@@ -17,16 +17,20 @@ namespace PosSystemApi.Controllers
 
         // GET: api/products
         [HttpGet]
-        public IActionResult GetAllProducts()
+        public async Task<IActionResult> GetAllProducts()
         {
-            return Ok(_productService.GetAllProducts());
+            var products =
+                await _productService.GetAllProductsAsync();
+
+            return Ok(products);
         }
 
         // GET: api/products/{sku}
         [HttpGet("{sku}")]
-        public IActionResult GetProduct(string sku)
+        public async Task<IActionResult> GetProduct(string sku)
         {
-            Product? product = _productService.FindProductBySku(sku);
+            Product? product =
+                await _productService.FindProductBySkuAsync(sku);
 
             if (product == null)
             {
@@ -38,11 +42,11 @@ namespace PosSystemApi.Controllers
 
         // POST: api/products
         [HttpPost]
-        public IActionResult AddProduct(Product product)
+        public async Task<IActionResult> AddProduct(Product product)
         {
             try
             {
-                _productService.AddProduct(product);
+                await _productService.AddProductAsync(product);
 
                 return Ok(product);
             }
@@ -54,11 +58,11 @@ namespace PosSystemApi.Controllers
 
         // DELETE: api/products/{sku}
         [HttpDelete("{sku}")]
-        public IActionResult DeleteProduct(string sku)
+        public async Task<IActionResult> DeleteProduct(string sku)
         {
             try
             {
-                _productService.RemoveProduct(sku);
+                await _productService.RemoveProductAsync(sku);
 
                 return Ok("Product removed successfully.");
             }

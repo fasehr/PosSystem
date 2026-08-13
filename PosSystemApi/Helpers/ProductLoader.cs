@@ -5,41 +5,65 @@ namespace PosSystemApi.Helpers
 {
     public static class ProductLoader
     {
-        public static void LoadProducts(
-            IProductService productService)
+        public static async Task LoadProductsAsync(
+            IProductService productService,
+            string filePath)
         {
-            string filePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Data",
-                "Products.csv");
-
             if (!File.Exists(filePath))
             {
-                Console.WriteLine("Products.csv not found.");
-                return;
+                throw new FileNotFoundException(
+                    "Products CSV file was not found.",
+                    filePath);
             }
 
-            string[] lines = File.ReadAllLines(filePath);
+            string[] lines = await File.ReadAllLinesAsync(filePath);
 
-            foreach (string line in lines)
+            foreach (string line in lines.Skip(1))
             {
-                try
+                if (string.IsNullOrWhiteSpace(line))
                 {
-                    string[] data = line.Split(',');
-
-                    Product product = new Product(
-                        data[0],
-                        data[1],
-                        decimal.Parse(data[2]),
-                        data[3],
-                        int.Parse(data[4]));
-
-                    productService.AddProduct(product);
+                    continue;
                 }
-                catch (Exception ex)
+
+                string[] values = line.Split(',');
+
+                if (values.Length < 5)
                 {
-                    Console.WriteLine($"Invalid record: {line}");
-                    Console.WriteLine(ex.Message);
+                    continue;
+                }
+
+                string sku = values[0].Trim();
+                string name = values[1].Trim();
+
+                if (!decimal.TryParse(
+                    values[2],
+                    out decimal unitPrice))
+                {
+                    continue;
+                }
+
+                string category = values[3].Trim();
+
+                if (!int.TryParse(
+                    values[4],
+                    out int stockQuantity))
+                {
+                    continue;
+                }
+
+                Product product = new Product(
+                    sku,
+                    name,
+                    unitPrice,
+                    category,
+                    stockQuantity);
+
+                Product? existingProduct =
+                    await productService.FindProductBySkuAsync(sku);
+
+                if (existingProduct == null)
+                {
+                    await productService.AddProductAsync(product);
                 }
             }
         }

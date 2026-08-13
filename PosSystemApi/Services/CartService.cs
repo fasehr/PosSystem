@@ -1,16 +1,34 @@
-﻿using PosSystemApi.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using PosSystemApi.Data;
+using PosSystemApi.Models;
 
 namespace PosSystemApi.Services
 {
     public class CartService : ICartService
     {
-        private readonly Cart _cart;
-        private readonly Stack<CartItem> _undoStack;
+        private readonly AppDbContext _context;
 
-        public CartService()
+        public CartService(AppDbContext context)
         {
-            _cart = new Cart();
-            _undoStack = new Stack<CartItem>();
+            _context = context;
+        }
+
+        private Cart GetOrCreateCart()
+        {
+            Cart? cart = _context.Carts
+                .Include(c => c.Items)
+                .ThenInclude(i => i.Product)
+                .FirstOrDefault();
+
+            if (cart == null)
+            {
+                cart = new Cart();
+
+                _context.Carts.Add(cart);
+                _context.SaveChanges();
+            }
+
+            return cart;
         }
 
         public void AddToCart(Product product, int quantity)
@@ -32,103 +50,66 @@ namespace PosSystemApi.Services
                     "Requested quantity exceeds available stock.");
             }
 
-            foreach (CartItem item in _cart.Items)
+            Cart cart = GetOrCreateCart();
+
+            CartItem? existingItem = cart.Items
+                .FirstOrDefault(i => i.ProductSku == product.Sku);
+
+            if (existingItem != null)
             {
-                if (item.Product.Sku == product.Sku)
+                int newQuantity = existingItem.Quantity + quantity;
+
+                if (newQuantity > product.StockQuantity)
                 {
-                    int newQuantity = item.Quantity + quantity;
-
-                    if (newQuantity > product.StockQuantity)
-                    {
-                        throw new InvalidOperationException(
-                            "Requested quantity exceeds available stock.");
-                    }
-
-                    item.Quantity = newQuantity;
-
-                    _undoStack.Push(
-                        new CartItem(product, quantity));
-
-                    return;
+                    throw new InvalidOperationException(
+                        "Requested quantity exceeds available stock.");
                 }
+
+                existingItem.Quantity = newQuantity;
+
+                _context.SaveChanges();
+                return;
             }
 
             CartItem newItem = new CartItem(product, quantity);
 
-            _cart.Items.Add(newItem);
+            newItem.CartId = cart.CartId;
 
-            _undoStack.Push(
-                new CartItem(product, quantity));
-        }
+            cart.Items.Add(newItem);
 
-        public void UndoLastAdd()
-        {
-            if (_undoStack.Count == 0)
-            {
-                throw new InvalidOperationException(
-                    "There is no cart action to undo.");
-            }
-
-            CartItem lastAddedItem = _undoStack.Pop();
-            CartItem? itemToUndo = null;
-
-            foreach (CartItem item in _cart.Items)
-            {
-                if (item.Product.Sku == lastAddedItem.Product.Sku)
-                {
-                    itemToUndo = item;
-                    break;
-                }
-            }
-
-            if (itemToUndo == null)
-            {
-                throw new InvalidOperationException(
-                    "The last added product is no longer in the cart.");
-            }
-
-            if (itemToUndo.Quantity > lastAddedItem.Quantity)
-            {
-                itemToUndo.Quantity -= lastAddedItem.Quantity;
-            }
-            else
-            {
-                _cart.Items.Remove(itemToUndo);
-            }
+            _context.SaveChanges();
         }
 
         public void RemoveFromCart(string sku)
         {
             if (string.IsNullOrWhiteSpace(sku))
             {
-                throw new ArgumentException("SKU cannot be empty.");
+                throw new ArgumentException(
+                    "SKU cannot be empty.");
             }
 
-            CartItem? itemToRemove = null;
+            Cart cart = GetOrCreateCart();
 
-            foreach (CartItem item in _cart.Items)
-            {
-                if (item.Product.Sku == sku)
-                {
-                    itemToRemove = item;
-                    break;
-                }
-            }
+            CartItem? item = cart.Items
+                .FirstOrDefault(i => i.ProductSku == sku);
 
-            if (itemToRemove == null)
+            if (item == null)
             {
                 throw new KeyNotFoundException(
                     "Product not found in cart.");
             }
 
-            _cart.Items.Remove(itemToRemove);
+            _context.CartItems.Remove(item);
+
+            _context.SaveChanges();
         }
 
         public void UpdateQuantity(string sku, int quantity)
         {
             if (string.IsNullOrWhiteSpace(sku))
             {
-                throw new ArgumentException("SKU cannot be empty.");
+                throw new ArgumentException(
+                    "SKU cannot be empty.");
             }
 
             if (quantity <= 0)
@@ -137,34 +118,46 @@ namespace PosSystemApi.Services
                     "Quantity must be greater than zero.");
             }
 
-            foreach (CartItem item in _cart.Items)
-            {
-                if (item.Product.Sku == sku)
-                {
-                    if (quantity > item.Product.StockQuantity)
-                    {
-                        throw new InvalidOperationException(
-                            "Requested quantity exceeds available stock.");
-                    }
+            Cart cart = GetOrCreateCart();
 
-                    item.Quantity = quantity;
-                    return;
-                }
+            CartItem? item = cart.Items
+                .FirstOrDefault(i => i.ProductSku == sku);
+
+            if (item == null)
+            {
+                throw new KeyNotFoundException(
+                    "Product not found in cart.");
             }
 
-            throw new KeyNotFoundException(
-                "Product not found in cart.");
+            if (quantity > item.Product.StockQuantity)
+            {
+                throw new InvalidOperationException(
+                    "Requested quantity exceeds available stock.");
+            }
+
+            item.Quantity = quantity;
+
+            _context.SaveChanges();
         }
 
         public void ClearCart()
         {
-            _cart.Items.Clear();
-            _undoStack.Clear();
+            Cart cart = GetOrCreateCart();
+
+            _context.CartItems.RemoveRange(cart.Items);
+
+            _context.SaveChanges();
         }
 
         public Cart GetCart()
         {
-            return _cart;
+            return GetOrCreateCart();
+        }
+
+        public void UndoLastAdd()
+        {
+            throw new NotImplementedException(
+                "Undo will be converted to persistent storage separately.");
         }
     }
 }

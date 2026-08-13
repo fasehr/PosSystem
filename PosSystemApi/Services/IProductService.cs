@@ -4,9 +4,9 @@ namespace PosSystemApi.Services
 {
     public interface IProductService
     {
-        IReadOnlyList<Product> GetAllProducts();
-        Product? FindProductBySku(string sku);
-        void AddProduct(Product product);
-        void RemoveProduct(string sku);
+        Task<List<Product>> GetAllProductsAsync();
+        Task<Product?> FindProductBySkuAsync(string sku);
+        Task AddProductAsync(Product product);
+        Task RemoveProductAsync(string sku);
     }
 }

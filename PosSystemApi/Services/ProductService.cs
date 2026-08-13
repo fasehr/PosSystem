@@ -1,4 +1,5 @@
-﻿using PosSystemApi.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using PosSystemApi.Data;
 using PosSystemApi.Models;
 
 namespace PosSystemApi.Services
@@ -12,46 +13,52 @@ namespace PosSystemApi.Services
             _context = context;
         }
 
-        public IReadOnlyList<Product> GetAllProducts()
+        public async Task<List<Product>> GetAllProductsAsync()
         {
-            return _context.Products.ToList();
+            return await _context.Products.ToListAsync();
         }
 
-        public Product? FindProductBySku(string sku)
+        public async Task<Product?> FindProductBySkuAsync(string sku)
         {
-            return _context.Products
-                .FirstOrDefault(p => p.Sku == sku);
+            return await _context.Products
+                .FirstOrDefaultAsync(p => p.Sku == sku);
         }
 
-        public void AddProduct(Product product)
+        public async Task AddProductAsync(Product product)
         {
             if (product == null)
             {
                 throw new ArgumentNullException(nameof(product));
             }
 
-            if (_context.Products.Any(p => p.Sku == product.Sku))
+            bool exists = await _context.Products
+                .AnyAsync(p => p.Sku == product.Sku);
+
+            if (exists)
             {
                 throw new ArgumentException(
                     "A product with this SKU already exists.");
             }
 
             _context.Products.Add(product);
-            _context.SaveChanges();
+
+            await _context.SaveChangesAsync();
         }
 
-        public void RemoveProduct(string sku)
+        public async Task RemoveProductAsync(string sku)
         {
-            var product = _context.Products
-                .FirstOrDefault(p => p.Sku == sku);
+            Product? product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Sku == sku);
 
             if (product == null)
             {
-                throw new KeyNotFoundException("Product not found.");
+                throw new KeyNotFoundException(
+                    "Product not found.");
             }
 
             _context.Products.Remove(product);
-            _context.SaveChanges();
+
+            await _context.SaveChangesAsync();
         }
     }
 }
