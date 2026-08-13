@@ -4,7 +4,8 @@ namespace PosSystemApi.Services
 {
     public interface ICheckoutService
     {
-        Order Checkout(Cart cart);
-        IReadOnlyCollection<Order> GetOrders();
+        Task<Order> CheckoutAsync(Cart cart);
+
+        Task<List<Order>> GetOrdersAsync();
     }
 }

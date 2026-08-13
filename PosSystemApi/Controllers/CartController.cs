@@ -21,9 +21,11 @@ namespace PosSystemApi.Controllers
 
         // GET: api/cart
         [HttpGet]
-        public IActionResult GetCart()
+        public async Task<IActionResult> GetCart()
         {
-            return Ok(_cartService.GetCart());
+            Cart cart = await _cartService.GetCartAsync();
+
+            return Ok(cart);
         }
 
         // POST: api/cart/{sku}/{quantity}
@@ -42,9 +44,14 @@ namespace PosSystemApi.Controllers
                     return NotFound("Product not found.");
                 }
 
-                _cartService.AddToCart(product, quantity);
+                await _cartService.AddToCartAsync(
+                    product,
+                    quantity);
 
-                return Ok(_cartService.GetCart());
+                Cart cart =
+                    await _cartService.GetCartAsync();
+
+                return Ok(cart);
             }
             catch (Exception ex)
             {
@@ -54,15 +61,20 @@ namespace PosSystemApi.Controllers
 
         // PUT: api/cart/{sku}/{quantity}
         [HttpPut("{sku}/{quantity}")]
-        public IActionResult UpdateQuantity(
+        public async Task<IActionResult> UpdateQuantity(
             string sku,
             int quantity)
         {
             try
             {
-                _cartService.UpdateQuantity(sku, quantity);
+                await _cartService.UpdateQuantityAsync(
+                    sku,
+                    quantity);
 
-                return Ok(_cartService.GetCart());
+                Cart cart =
+                    await _cartService.GetCartAsync();
+
+                return Ok(cart);
             }
             catch (Exception ex)
             {
@@ -72,13 +84,17 @@ namespace PosSystemApi.Controllers
 
         // DELETE: api/cart/{sku}
         [HttpDelete("{sku}")]
-        public IActionResult RemoveFromCart(string sku)
+        public async Task<IActionResult> RemoveFromCart(
+            string sku)
         {
             try
             {
-                _cartService.RemoveFromCart(sku);
+                await _cartService.RemoveFromCartAsync(sku);
 
-                return Ok(_cartService.GetCart());
+                Cart cart =
+                    await _cartService.GetCartAsync();
+
+                return Ok(cart);
             }
             catch (Exception ex)
             {
@@ -88,22 +104,25 @@ namespace PosSystemApi.Controllers
 
         // DELETE: api/cart
         [HttpDelete]
-        public IActionResult ClearCart()
+        public async Task<IActionResult> ClearCart()
         {
-            _cartService.ClearCart();
+            await _cartService.ClearCartAsync();
 
             return Ok("Cart cleared successfully.");
         }
 
         // POST: api/cart/undo
         [HttpPost("undo")]
-        public IActionResult UndoLastAdd()
+        public async Task<IActionResult> UndoLastAdd()
         {
             try
             {
-                _cartService.UndoLastAdd();
+                await _cartService.UndoLastAddAsync();
 
-                return Ok(_cartService.GetCart());
+                Cart cart =
+                    await _cartService.GetCartAsync();
+
+                return Ok(cart);
             }
             catch (Exception ex)
             {

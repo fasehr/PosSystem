@@ -21,13 +21,15 @@ namespace PosSystemApi.Controllers
 
         // POST: api/checkout
         [HttpPost]
-        public IActionResult Checkout()
+        public async Task<IActionResult> Checkout()
         {
             try
             {
-                Cart cart = _cartService.GetCart();
+                Cart cart =
+                    await _cartService.GetCartAsync();
 
-                Order order = _checkoutService.Checkout(cart);
+                Order order =
+                    await _checkoutService.CheckoutAsync(cart);
 
                 return Ok(order);
             }

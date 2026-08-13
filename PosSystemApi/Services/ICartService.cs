@@ -4,11 +4,20 @@ namespace PosSystemApi.Services
 {
     public interface ICartService
     {
-        Cart GetCart();
-        void AddToCart(Product product, int quantity);
-        void UpdateQuantity(string sku, int quantity);
-        void RemoveFromCart(string sku);
-        void ClearCart();
-        void UndoLastAdd();
+        Task<Cart> GetCartAsync();
+
+        Task AddToCartAsync(
+            Product product,
+            int quantity);
+
+        Task UpdateQuantityAsync(
+            string sku,
+            int quantity);
+
+        Task RemoveFromCartAsync(string sku);
+
+        Task ClearCartAsync();
+
+        Task UndoLastAddAsync();
     }
 }

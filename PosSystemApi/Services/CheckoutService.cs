@@ -13,7 +13,7 @@ namespace PosSystemApi.Services
             _context = context;
         }
 
-        public Order Checkout(Cart cart)
+        public async Task<Order> CheckoutAsync(Cart cart)
         {
             if (cart == null)
             {
@@ -50,23 +50,24 @@ namespace PosSystemApi.Services
                 order.Items.Add(item);
             }
 
-            _context.Orders.Add(order);
+            await _context.Orders.AddAsync(order);
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             cart.Items.Clear();
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return order;
         }
 
-        public IReadOnlyCollection<Order> GetOrders()
+        public async Task<List<Order>> GetOrdersAsync()
         {
-            return _context.Orders
+            return await _context.Orders
                 .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
-                .ToList();
+                .Include(o => o.Customer)
+                .ToListAsync();
         }
     }
 }

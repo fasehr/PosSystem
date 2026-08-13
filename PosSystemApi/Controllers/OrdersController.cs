@@ -17,9 +17,12 @@ namespace PosSystemApi.Controllers
 
         // GET: api/orders
         [HttpGet]
-        public IActionResult GetOrders()
+        public async Task<IActionResult> GetOrders()
         {
-            return Ok(_checkoutService.GetOrders());
+            var orders =
+                await _checkoutService.GetOrdersAsync();
+
+            return Ok(orders);
         }
     }
 }

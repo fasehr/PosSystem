@@ -13,25 +13,25 @@ namespace PosSystemApi.Services
             _context = context;
         }
 
-        private Cart GetOrCreateCart()
+        private async Task<Cart> GetOrCreateCartAsync()
         {
-            Cart? cart = _context.Carts
+            Cart? cart = await _context.Carts
                 .Include(c => c.Items)
                 .ThenInclude(i => i.Product)
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
 
             if (cart == null)
             {
                 cart = new Cart();
 
-                _context.Carts.Add(cart);
-                _context.SaveChanges();
+                await _context.Carts.AddAsync(cart);
+                await _context.SaveChangesAsync();
             }
 
             return cart;
         }
 
-        public void AddToCart(Product product, int quantity)
+        public async Task AddToCartAsync(Product product, int quantity)
         {
             if (product == null)
             {
@@ -50,14 +50,15 @@ namespace PosSystemApi.Services
                     "Requested quantity exceeds available stock.");
             }
 
-            Cart cart = GetOrCreateCart();
+            Cart cart = await GetOrCreateCartAsync();
 
             CartItem? existingItem = cart.Items
                 .FirstOrDefault(i => i.ProductSku == product.Sku);
 
             if (existingItem != null)
             {
-                int newQuantity = existingItem.Quantity + quantity;
+                int newQuantity =
+                    existingItem.Quantity + quantity;
 
                 if (newQuantity > product.StockQuantity)
                 {
@@ -67,20 +68,21 @@ namespace PosSystemApi.Services
 
                 existingItem.Quantity = newQuantity;
 
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return;
             }
 
-            CartItem newItem = new CartItem(product, quantity);
+            CartItem newItem =
+                new CartItem(product, quantity);
 
             newItem.CartId = cart.CartId;
 
             cart.Items.Add(newItem);
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void RemoveFromCart(string sku)
+        public async Task RemoveFromCartAsync(string sku)
         {
             if (string.IsNullOrWhiteSpace(sku))
             {
@@ -88,7 +90,7 @@ namespace PosSystemApi.Services
                     "SKU cannot be empty.");
             }
 
-            Cart cart = GetOrCreateCart();
+            Cart cart = await GetOrCreateCartAsync();
 
             CartItem? item = cart.Items
                 .FirstOrDefault(i => i.ProductSku == sku);
@@ -101,10 +103,12 @@ namespace PosSystemApi.Services
 
             _context.CartItems.Remove(item);
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void UpdateQuantity(string sku, int quantity)
+        public async Task UpdateQuantityAsync(
+            string sku,
+            int quantity)
         {
             if (string.IsNullOrWhiteSpace(sku))
             {
@@ -118,7 +122,7 @@ namespace PosSystemApi.Services
                     "Quantity must be greater than zero.");
             }
 
-            Cart cart = GetOrCreateCart();
+            Cart cart = await GetOrCreateCartAsync();
 
             CartItem? item = cart.Items
                 .FirstOrDefault(i => i.ProductSku == sku);
@@ -137,24 +141,24 @@ namespace PosSystemApi.Services
 
             item.Quantity = quantity;
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void ClearCart()
+        public async Task ClearCartAsync()
         {
-            Cart cart = GetOrCreateCart();
+            Cart cart = await GetOrCreateCartAsync();
 
             _context.CartItems.RemoveRange(cart.Items);
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public Cart GetCart()
+        public async Task<Cart> GetCartAsync()
         {
-            return GetOrCreateCart();
+            return await GetOrCreateCartAsync();
         }
 
-        public void UndoLastAdd()
+        public Task UndoLastAddAsync()
         {
             throw new NotImplementedException(
                 "Undo will be converted to persistent storage separately.");
