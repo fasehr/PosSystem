@@ -13,7 +13,10 @@ namespace PosSystemApi.Services
             _context = context;
         }
 
-        public async Task<Order> CheckoutAsync(Cart cart)
+        public async Task<Order> CheckoutAsync(
+            Cart cart,
+            int customerId,
+            PaymentType paymentType)
         {
             if (cart == null)
             {
@@ -23,6 +26,14 @@ namespace PosSystemApi.Services
             if (cart.Items.Count == 0)
             {
                 throw new InvalidOperationException("Cart is empty.");
+            }
+
+            Customer? customer = await _context.Customers
+                .FirstOrDefaultAsync(c => c.CustomerId == customerId);
+
+            if (customer == null)
+            {
+                throw new KeyNotFoundException("Customer not found.");
             }
 
             foreach (CartItem item in cart.Items)
@@ -37,7 +48,10 @@ namespace PosSystemApi.Services
             Order order = new Order
             {
                 Total = cart.Total,
-                CreatedAt = DateTime.Now
+                PaymentType = paymentType,
+                CreatedAt = DateTime.Now,
+                CustomerId = customerId,
+                Customer = customer
             };
 
             foreach (CartItem item in cart.Items)

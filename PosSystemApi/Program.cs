@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PosSystemApi.Authentication;
 using PosSystemApi.Data;
+using PosSystemApi.Middleware;
 using PosSystemApi.Services;
 using System.Text;
 
@@ -76,6 +77,9 @@ app.UseHttpsRedirection();
 // Authentication must come before Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Custom database logging middleware
+app.UseMiddleware<LoggingMiddleware>();
 
 // Controllers
 app.MapControllers();

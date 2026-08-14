@@ -10,7 +10,8 @@ public class Order
 
     public decimal Total { get; set; }
 
-    public PaymentType PaymentMethod { get; set; }
+    public PaymentType PaymentType { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public int CustomerId { get; set; }
@@ -22,15 +23,15 @@ public class Order
     }
 
     public Order(
-     int orderId,
-     List<CartItem> items,
-     decimal total,
-     PaymentType paymentMethod)
+        int orderId,
+        List<CartItem> items,
+        decimal total,
+        PaymentType paymentType)
     {
         OrderId = orderId;
         Items = new List<CartItem>(items);
         Total = total;
-        PaymentMethod = paymentMethod;
+        PaymentType = paymentType;
         CreatedAt = DateTime.Now;
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PosSystemApi.Models;
 using PosSystemApi.Services;
-
+using Microsoft.AspNetCore.Authorization;
 namespace PosSystemApi.Controllers
 {
     [ApiController]
@@ -16,6 +16,7 @@ namespace PosSystemApi.Controllers
         }
 
         // GET: api/customers
+        [Authorize(Roles = "Admin,Salesman")]
         [HttpGet]
         public async Task<IActionResult> GetAllCustomers()
         {
@@ -26,6 +27,7 @@ namespace PosSystemApi.Controllers
         }
 
         // GET: api/customers/1
+        [Authorize(Roles = "Admin,Salesman")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCustomerById(int id)
         {
@@ -41,6 +43,7 @@ namespace PosSystemApi.Controllers
         }
 
         // POST: api/customers
+        [Authorize(Roles = "Admin,Salesman")]
         [HttpPost]
         public async Task<IActionResult> AddCustomer(Customer customer)
         {
@@ -58,6 +61,7 @@ namespace PosSystemApi.Controllers
         }
 
         // DELETE: api/customers/1
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCustomer(int id)
         {

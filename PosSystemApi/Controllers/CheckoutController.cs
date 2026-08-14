@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using PosSystemApi.DTOs;
 using PosSystemApi.Models;
 using PosSystemApi.Services;
 
 namespace PosSystemApi.Controllers
 {
+    [Authorize(Roles = "Admin,Salesman")]
     [ApiController]
     [Route("api/[controller]")]
     public class CheckoutController : ControllerBase
@@ -21,7 +24,8 @@ namespace PosSystemApi.Controllers
 
         // POST: api/checkout
         [HttpPost]
-        public async Task<IActionResult> Checkout()
+        public async Task<IActionResult> Checkout(
+            CheckoutRequest request)
         {
             try
             {
@@ -29,7 +33,10 @@ namespace PosSystemApi.Controllers
                     await _cartService.GetCartAsync();
 
                 Order order =
-                    await _checkoutService.CheckoutAsync(cart);
+                    await _checkoutService.CheckoutAsync(
+                        cart,
+                        request.CustomerId,
+                        request.PaymentType);
 
                 return Ok(order);
             }

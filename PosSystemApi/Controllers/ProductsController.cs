@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PosSystemApi.Models;
 using PosSystemApi.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PosSystemApi.Controllers
 {
@@ -16,6 +17,7 @@ namespace PosSystemApi.Controllers
         }
 
         // GET: api/products
+        [Authorize(Roles = "Admin,Salesman")]
         [HttpGet]
         public async Task<IActionResult> GetAllProducts()
         {
@@ -26,6 +28,7 @@ namespace PosSystemApi.Controllers
         }
 
         // GET: api/products/{sku}
+        [Authorize(Roles = "Admin,Salesman")]
         [HttpGet("{sku}")]
         public async Task<IActionResult> GetProduct(string sku)
         {
@@ -41,6 +44,7 @@ namespace PosSystemApi.Controllers
         }
 
         // POST: api/products
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> AddProduct(Product product)
         {
@@ -57,6 +61,7 @@ namespace PosSystemApi.Controllers
         }
 
         // DELETE: api/products/{sku}
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{sku}")]
         public async Task<IActionResult> DeleteProduct(string sku)
         {

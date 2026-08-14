@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PosSystemApi.Services;
 
 namespace PosSystemApi.Controllers
 {
+    [Authorize(Roles = "Admin,Salesman")]
     [ApiController]
     [Route("api/[controller]")]
     public class OrdersController : ControllerBase
