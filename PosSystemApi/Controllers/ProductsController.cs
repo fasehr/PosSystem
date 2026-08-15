@@ -19,14 +19,21 @@ namespace PosSystemApi.Controllers
         // GET: api/products
         [Authorize(Roles = "Admin,Salesman")]
         [HttpGet]
-        public async Task<IActionResult> GetAllProducts()
+        public async Task<IActionResult> GetAllProducts(
+         string? category,
+         bool? inStock,
+         decimal? minPrice,
+         decimal? maxPrice)
         {
             var products =
-                await _productService.GetAllProductsAsync();
+                await _productService.GetAllProductsAsync(
+                    category,
+                    inStock,
+                    minPrice,
+                    maxPrice);
 
             return Ok(products);
         }
-
         // GET: api/products/{sku}
         [Authorize(Roles = "Admin,Salesman")]
         [HttpGet("{sku}")]

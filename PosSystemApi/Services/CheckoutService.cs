@@ -75,13 +75,43 @@ namespace PosSystemApi.Services
             return order;
         }
 
-        public async Task<List<Order>> GetOrdersAsync()
+        public async Task<List<Order>> GetOrdersAsync(
+         int? customerId,
+         PaymentType? paymentType,
+         DateTime? fromDate,
+         DateTime? toDate)
         {
-            return await _context.Orders
+            var query = _context.Orders
                 .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
                 .Include(o => o.Customer)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (customerId.HasValue)
+            {
+                query = query.Where(o =>
+                    o.CustomerId == customerId.Value);
+            }
+
+            if (paymentType.HasValue)
+            {
+                query = query.Where(o =>
+                    o.PaymentType == paymentType.Value);
+            }
+
+            if (fromDate.HasValue)
+            {
+                query = query.Where(o =>
+                    o.CreatedAt >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                query = query.Where(o =>
+                    o.CreatedAt <= toDate.Value);
+            }
+
+            return await query.ToListAsync();
         }
     }
 }

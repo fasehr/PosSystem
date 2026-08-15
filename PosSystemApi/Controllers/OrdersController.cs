@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PosSystemApi.Models;
 using PosSystemApi.Services;
 
 namespace PosSystemApi.Controllers
@@ -19,10 +20,17 @@ namespace PosSystemApi.Controllers
 
         // GET: api/orders
         [HttpGet]
-        public async Task<IActionResult> GetOrders()
+        public async Task<IActionResult> GetOrders(
+        int? customerId,
+        PaymentType? paymentType,
+        DateTime? fromDate,
+        DateTime? toDate)
         {
-            var orders =
-                await _checkoutService.GetOrdersAsync();
+            var orders = await _checkoutService.GetOrdersAsync(
+                customerId,
+                paymentType,
+                fromDate,
+                toDate);
 
             return Ok(orders);
         }

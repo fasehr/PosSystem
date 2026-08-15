@@ -12,10 +12,40 @@ namespace PosSystemApi.Services
         {
             _context = context;
         }
-
-        public async Task<List<Product>> GetAllProductsAsync()
+        //  This method retrieves a list of products from the database based on optional filtering criteria.
+        public async Task<List<Product>> GetAllProductsAsync(
+          string? category,
+          bool? inStock,
+          decimal? minPrice,
+          decimal? maxPrice)
         {
-            return await _context.Products.ToListAsync();
+            var query = _context.Products.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                query = query.Where(p =>
+                    p.Category == category);
+            }
+
+            if (inStock == true)
+            {
+                query = query.Where(p =>
+                    p.StockQuantity > 0);
+            }
+
+            if (minPrice.HasValue)
+            {
+                query = query.Where(p =>
+                    p.UnitPrice >= minPrice.Value);
+            }
+
+            if (maxPrice.HasValue)
+            {
+                query = query.Where(p =>
+                    p.UnitPrice <= maxPrice.Value);
+            }
+
+            return await query.ToListAsync();
         }
 
         public async Task<Product?> FindProductBySkuAsync(string sku)

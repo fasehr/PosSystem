@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using PosSystemApi.Authentication;
 using PosSystemApi.Data;
 using PosSystemApi.Middleware;
@@ -12,9 +13,29 @@ var builder = WebApplication.CreateBuilder(args);
 // Controllers
 builder.Services.AddControllers();
 
-// Swagger
+// Swagger + JWT support
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token."
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecuritySchemeReference("Bearer", document),
+            []
+        }
+    });
+});
 
 // Entity Framework Core + SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -74,14 +95,16 @@ if (app.Environment.IsDevelopment())
 // HTTPS
 app.UseHttpsRedirection();
 
-// Authentication must come before Authorization
+// Authentication
 app.UseAuthentication();
+
+// Authorization
 app.UseAuthorization();
 
-// Custom database logging middleware
+// Custom logging middleware
 app.UseMiddleware<LoggingMiddleware>();
 
-// Controllers
+// Map controllers
 app.MapControllers();
 
 // Start application

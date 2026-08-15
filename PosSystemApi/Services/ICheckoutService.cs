@@ -9,6 +9,10 @@ namespace PosSystemApi.Services
             int customerId,
             PaymentType paymentType);
 
-        Task<List<Order>> GetOrdersAsync();
+        Task<List<Order>> GetOrdersAsync(
+            int? customerId,
+            PaymentType? paymentType,
+            DateTime? fromDate,
+            DateTime? toDate);
     }
 }
