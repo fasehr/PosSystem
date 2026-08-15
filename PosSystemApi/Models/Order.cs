@@ -1,5 +1,6 @@
 ﻿using PosSystemApi.Models;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class Order
 {
@@ -8,6 +9,7 @@ public class Order
 
     public List<CartItem> Items { get; set; } = new();
 
+    [Column(TypeName = "decimal(18,2)")]
     public decimal Total { get; set; }
 
     public PaymentType PaymentType { get; set; }
